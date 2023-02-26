@@ -3,6 +3,8 @@
 
 #include "BaseGeometryActor.h"
 #include "Engine/Engine.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "TimerManager.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogBaseGeometry, All, All)
 
@@ -24,21 +26,76 @@ void ABaseGeometryActor::BeginPlay()
 
 	InitialLocation = GetActorLocation();//TODO
 
+	SetColor(GeometryData.Color);
 
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ABaseGeometryActor::OnTimerFiered, GeometryData.TimerRate, true);
 	//PrintStringTypes();
 	//PrintTransform
+}
+
+void ABaseGeometryActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UE_LOG(LogBaseGeometry, Error, TEXT("Actor is dead %s"), *GetName());
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
 void ABaseGeometryActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	FVector CurrentLocation = GetActorLocation();
-	float time = GetWorld()->GetTimeSeconds();
-	CurrentLocation.Z = InitialLocation.Z + Amplitude * FMath::Sin(Frequency * time);
+	HendleMovement();
+	//PintTypes();
+}
 
-	SetActorLocation(CurrentLocation);
-	//printTypes();
+void ABaseGeometryActor::HendleMovement()
+{
+	switch (GeometryData.MoveType)
+	{
+	case EMovementType::Sin:
+	{
+		FVector CurrentLocation = GetActorLocation();
+		if (GetWorld())
+		{
+			float Time = GetWorld()->GetTimeSeconds();
+			CurrentLocation.Z = InitialLocation.Z + GeometryData.Amplitude * FMath::Sin(GeometryData.Frequency * Time);
+
+			SetActorLocation(CurrentLocation);
+		}
+		
+	}
+	break;
+	case EMovementType::Static:
+	break;
+	default:
+		break;
+	}
+}
+
+void ABaseGeometryActor::SetColor(const FLinearColor& Color)
+{
+	if (!BaseMesh) return;
+	UMaterialInstanceDynamic* DynMaterial = BaseMesh->CreateAndSetMaterialInstanceDynamic(0);
+	if (DynMaterial)
+	{
+		DynMaterial->SetVectorParameterValue("Color", Color);
+	}
+}
+
+void ABaseGeometryActor::OnTimerFiered()
+{
+	if (++TimerCount <= MaxTimerCount)
+	{
+		const FLinearColor NewColor = FLinearColor::MakeRandomColor();
+		UE_LOG(LogBaseGeometry, Display, TEXT("Color to set up: %s, Timer count: %i"), *NewColor.ToString(), TimerCount);
+		SetColor(NewColor);
+		OnColorChanged.Broadcast(NewColor, GetName());
+	}
+	else {
+		UE_LOG(LogBaseGeometry, Warning, TEXT("Timer has beeb stopped!"));
+		GetWorldTimerManager().ClearTimer(TimerHandle);
+		OnTimerFinished.Broadcast(this); 
+	}
+		
 }
 
 void ABaseGeometryActor::PrintTransform() {
@@ -55,8 +112,6 @@ void ABaseGeometryActor::PrintTransform() {
 	UE_LOG(LogBaseGeometry, Warning, TEXT("Scale %s"), *Scale.ToString());
 
 	UE_LOG(LogBaseGeometry, Error, TEXT("Human Transform %s"), *Transform.ToHumanReadableString());
-
-
 }
 
 void ABaseGeometryActor::PrintStringTypes() {
@@ -70,12 +125,16 @@ void ABaseGeometryActor::PrintStringTypes() {
 	FString Stat = FString::Printf(TEXT("\nAll stat \n%s\n%s\n%s"), *WeaponsNumStr, *HealthStr, *IsDeadStr);
 	UE_LOG(LogBaseGeometry, Warning, TEXT("%s"), *Stat);
 
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, Name);
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, Stat, true, FVector2D(1.5, 1.5));
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, Name);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, Stat, true, FVector2D(1.5, 1.5));
+	}
+
 
 }
 
-void ABaseGeometryActor::printTypes()
+void ABaseGeometryActor::PrintTypes()
 {
 	UE_LOG(LogTemp, Display, TEXT("Hello Unreal!"));
 	UE_LOG(LogTemp, Warning, TEXT("Hello Unreal!"));
