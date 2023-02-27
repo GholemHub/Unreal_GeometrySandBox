@@ -1,7 +1,11 @@
+#include "SandboxPawn.h"
+#include "SandboxPawn.h"
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SandboxPawn.h"
 #include "Components/InputComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Camera/CameraComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogSandboxPawn, All, All)
 
@@ -13,13 +17,33 @@ ASandboxPawn::ASandboxPawn()
 
 	SceneComponent = CreateDefaultSubobject<USceneComponent>("SceneComponent");
 	SetRootComponent(SceneComponent);
+
+	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("StaticMeshComponent");
+	StaticMeshComponent->SetupAttachment(GetRootComponent());
+
+	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
+	CameraComponent->SetupAttachment(GetRootComponent());
+}
+
+void ASandboxPawn::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	UE_LOG(LogSandboxPawn, Error, TEXT("%s prossessed %s"), *GetName(), *NewController->GetName());
+	
+}
+
+void ASandboxPawn::UnPossessed()
+{
+	Super::UnPossessed();
+	UE_LOG(LogSandboxPawn, Warning, TEXT("%s UnPossessed"), *GetName());
+	
 }
 
 // Called when the game starts or when spawned
 void ASandboxPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 // Called every frame
