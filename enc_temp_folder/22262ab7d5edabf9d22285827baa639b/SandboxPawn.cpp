@@ -28,8 +28,6 @@ ASandboxPawn::ASandboxPawn()
 void ASandboxPawn::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
-	if (!NewController) return;
 	UE_LOG(LogSandboxPawn, Error, TEXT("%s prossessed %s"), *GetName(), *NewController->GetName());
 	
 }
@@ -56,7 +54,6 @@ void ASandboxPawn::Tick(float DeltaTime)
 	{
 		const FVector NewLocation = GetActorLocation() + Velocity * DeltaTime * VelocityVector;
 		SetActorLocation(NewLocation);
-		VelocityVector = FVector::ZeroVector;
 	}
 }
 
@@ -65,12 +62,9 @@ void ASandboxPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	if (PlayerInputComponent)
-	{
+	PlayerInputComponent->BindAxis("MoveForward", this, &ASandboxPawn::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &ASandboxPawn::MoveRight);
 
-		PlayerInputComponent->BindAxis("MoveForward", this, &ASandboxPawn::MoveForward);
-		PlayerInputComponent->BindAxis("MoveRight", this, &ASandboxPawn::MoveRight);
-	}
 }
 
 void ASandboxPawn::MoveForward(float Amount)
