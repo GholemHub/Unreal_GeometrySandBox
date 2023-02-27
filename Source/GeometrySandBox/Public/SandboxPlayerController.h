@@ -15,12 +15,12 @@ class GEOMETRYSANDBOX_API ASandboxPlayerController : public APlayerController
 	GENERATED_BODY()
 protected:
 	virtual void SetupInputComponent() override;
-	virtual void BeginPlay() override;
+		virtual void BeginPlay() override;
 private:
 	void ChangePawn();
 
 	int32 CurrentPawnIndex = 0;
 
 	UPROPERTY()
-	TArray<AActor*> Pawns;
+		TArray<AActor*> Pawns;
 };
